@@ -86,7 +86,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
         Paint mHandPaint;
-        Paint mTickPaint;
+        Paint mBigTickPaint;
+        Paint mSmallTickPaint;
         boolean mAmbient;
         Time mTime;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
@@ -128,16 +129,22 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
 
             mHandPaint = new Paint();
-            mHandPaint.setColor(resources.getColor(R.color.analog_hands));
+            mHandPaint.setColor(Color.DKGRAY);
             mHandPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hand_stroke));
             mHandPaint.setAntiAlias(true);
             mHandPaint.setStrokeCap(Paint.Cap.ROUND);
 
-            mTickPaint = new Paint();
-            mTickPaint.setColor(Color.BLACK);
-            mTickPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hand_tick));
-            mTickPaint.setAntiAlias(true);
-            mTickPaint.setStrokeCap(Paint.Cap.ROUND);
+            mBigTickPaint = new Paint();
+            mBigTickPaint.setColor(Color.BLACK);
+            mBigTickPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hand_big_tick));
+            mBigTickPaint.setAntiAlias(true);
+            mBigTickPaint.setStrokeCap(Paint.Cap.ROUND);
+
+            mSmallTickPaint = new Paint();
+            mSmallTickPaint.setColor(Color.BLACK);
+            mSmallTickPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hand_small_tick));
+            mSmallTickPaint.setAntiAlias(true);
+            mSmallTickPaint.setStrokeCap(Paint.Cap.ROUND);
 
             mTime = new Time();
         }
@@ -322,12 +329,12 @@ public class MyWatchFace extends CanvasWatchFaceService {
         }
 
         private void drawWatchTicks(float centerX, float centerY, Canvas canvas) {
-            double sinVal = 0;
-            double cosVal = 0;
-            double angle = 0;
-            float length1 = 0;
-            float length2 = 0;
-            float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+            double sinVal;
+            double cosVal;
+            double angle;
+            float length1;
+            float length2;
+            float x1, y1, x2, y2;
 
             length1 = centerX - 25;
             length2 = centerX;
@@ -335,14 +342,17 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 angle = (i * Math.PI * 2 / 60);
                 sinVal = Math.sin(angle);
                 cosVal = Math.cos(angle);
-                float len = (i % 5 == 0) ? length1 :
-                        (length1 + 15);
+                float len = (i % 5 == 0) ? length1 : (length1 + 15);
                 x1 = (float)(sinVal * len);
                 y1 = (float)(-cosVal * len);
                 x2 = (float)(sinVal * length2);
                 y2 = (float)(-cosVal * length2);
-                canvas.drawLine(centerX + x1, centerY + y1, centerX + x2,
-                        centerY + y2, mTickPaint);
+
+                if (i % 5 == 0) {
+                    canvas.drawLine(centerX + x1, centerY + y1, centerX + x2, centerY + y2, mBigTickPaint);
+                } else {
+                    canvas.drawLine(centerX + x1, centerY + y1, centerX + x2, centerY + y2, mSmallTickPaint);
+                }
             }
         }
     }

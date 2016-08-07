@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="analog_hand_stroke">3dp</dimen>
-    <dimen name="analog_hand_tick">3dp</dimen>
+    <dimen name="analog_hand_stroke">5dp</dimen>
+    <dimen name="analog_hand_big_tick">3dp</dimen>
+    <dimen name="analog_hand_small_tick">1dp</dimen>
 </resources>
