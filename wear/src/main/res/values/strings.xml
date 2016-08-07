@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Doge Watch</string>
+    <string name="doge_watch_face_name">Doge</string>
+    <string name="watch_background">doge_face.png</string>
+</resources>
