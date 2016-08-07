@@ -86,6 +86,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
         Paint mHandPaint;
+        Paint mTickPaint;
         boolean mAmbient;
         Time mTime;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
@@ -131,6 +132,12 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mHandPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hand_stroke));
             mHandPaint.setAntiAlias(true);
             mHandPaint.setStrokeCap(Paint.Cap.ROUND);
+
+            mTickPaint = new Paint();
+            mTickPaint.setColor(Color.BLACK);
+            mTickPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hand_tick));
+            mTickPaint.setAntiAlias(true);
+            mTickPaint.setStrokeCap(Paint.Cap.ROUND);
 
             mTime = new Time();
         }
@@ -197,18 +204,19 @@ public class MyWatchFace extends CanvasWatchFaceService {
         public void onDraw(Canvas canvas, Rect bounds) {
             mTime.setToNow();
 
-            // Draw the background.
-            if (isInAmbientMode()) {
-                canvas.drawColor(Color.BLACK);
-            } else {
-                canvas.drawBitmap(mScaledBackgroundBitmap, 0, 0, null);
-            }
-
             // Find the center. Ignore the window insets so that, on round watches with a
             // "chin", the watch face is centered on the entire screen, not just the usable
             // portion.
             float centerX = bounds.width() / 2f;
             float centerY = bounds.height() / 2f;
+
+            // Draw the background.
+            if (isInAmbientMode()) {
+                canvas.drawColor(Color.BLACK);
+            } else {
+                canvas.drawBitmap(mScaledBackgroundBitmap, 0, 0, null);
+                drawWatchTicks(centerX, centerY, canvas);
+            }
 
             float secRot = mTime.second / 30f * (float) Math.PI;
             int minutes = mTime.minute;
@@ -310,6 +318,31 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 long delayMs = INTERACTIVE_UPDATE_RATE_MS
                         - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
+            }
+        }
+
+        private void drawWatchTicks(float centerX, float centerY, Canvas canvas) {
+            double sinVal = 0;
+            double cosVal = 0;
+            double angle = 0;
+            float length1 = 0;
+            float length2 = 0;
+            float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+
+            length1 = centerX - 25;
+            length2 = centerX;
+            for (int i = 0; i < 60; i++) {
+                angle = (i * Math.PI * 2 / 60);
+                sinVal = Math.sin(angle);
+                cosVal = Math.cos(angle);
+                float len = (i % 5 == 0) ? length1 :
+                        (length1 + 15);
+                x1 = (float)(sinVal * len);
+                y1 = (float)(-cosVal * len);
+                x2 = (float)(sinVal * length2);
+                y2 = (float)(-cosVal * length2);
+                canvas.drawLine(centerX + x1, centerY + y1, centerX + x2,
+                        centerY + y2, mTickPaint);
             }
         }
     }
