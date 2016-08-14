@@ -2,4 +2,11 @@
     <string name="app_name">Doge Watch</string>
     <string name="doge_watch_face_name">Doge</string>
     <string name="watch_background">doge_face.png</string>
+    <string name="morning_string">Such morning</string>
+    <string name="noon_string">Such noon</string>
+    <string name="afternoon_string">Such afternoon</string>
+    <string name="evening_string">Such evening</string>
+    <string name="midnight_string">Such midnight</string>
+    <string name="time_default_string">Such time</string>
+    <string name="wow_string">wow</string>
 </resources>
