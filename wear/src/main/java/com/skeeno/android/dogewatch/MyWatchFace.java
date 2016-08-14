@@ -26,6 +26,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -35,6 +36,8 @@ import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
 import android.view.SurfaceHolder;
+
+import com.skeeno.android.dogewatch.Utils.WatchUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.TimeZone;
@@ -55,6 +58,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
      * Handler message id for updating the time periodically in interactive mode.
      */
     private static final int MSG_UPDATE_TIME = 0;
+
+    private WatchUtils watchUtils = new WatchUtils();
 
     @Override
     public Engine onCreateEngine() {
@@ -88,6 +93,11 @@ public class MyWatchFace extends CanvasWatchFaceService {
         Paint mHandPaint;
         Paint mBigTickPaint;
         Paint mSmallTickPaint;
+        Paint mDigitalTimePaint;
+        Paint mFuzzyTimePaint;
+        Paint mDatePaint;
+        Paint mWowPaint;
+        Typeface mTypeface;
         boolean mAmbient;
         Time mTime;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
@@ -125,6 +135,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
             Drawable backgroundDrawable = resources.getDrawable(R.drawable.doge_face, null);
             mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
 
+            //comic sans typeface
+            mTypeface = Typeface.createFromAsset(getBaseContext().getAssets(), "fonts/comic.ttf");
+
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
 
@@ -145,6 +158,39 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mSmallTickPaint.setStrokeWidth(resources.getDimension(R.dimen.analog_hand_small_tick));
             mSmallTickPaint.setAntiAlias(true);
             mSmallTickPaint.setStrokeCap(Paint.Cap.ROUND);
+
+            mDigitalTimePaint = new Paint();
+            mDigitalTimePaint.setARGB(255, 134, 225, 0);
+            mDigitalTimePaint.setStrokeWidth(5.f);
+            mDigitalTimePaint.setTextSize(28);
+            mDigitalTimePaint.setTypeface(mTypeface);
+            mDigitalTimePaint.setStyle(Paint.Style.FILL);
+            mDigitalTimePaint.setAntiAlias(true);
+
+            mFuzzyTimePaint = new Paint();
+            mFuzzyTimePaint.setARGB(255, 6, 215, 255);
+            mFuzzyTimePaint.setStrokeWidth(5.f);
+            mFuzzyTimePaint.setTextSize(24);
+            mFuzzyTimePaint.setTypeface(mTypeface);
+            mFuzzyTimePaint.setStyle(Paint.Style.FILL);
+            mFuzzyTimePaint.setAntiAlias(true);
+
+            mDatePaint = new Paint();
+            mDatePaint.setARGB(255, 255, 17, 0);
+            mDatePaint.setStrokeWidth(5.f);
+            mDatePaint.setTextSize(24);
+            mDatePaint.setTypeface(mTypeface);
+            mDatePaint.setStyle(Paint.Style.FILL);
+            mDatePaint.setAntiAlias(true);
+
+            mWowPaint = new Paint();
+            mWowPaint.setARGB(255, 255, 255, 255);
+            mWowPaint.setStrokeWidth(5.f);
+            mWowPaint.setTextSize(30);
+            mWowPaint.setTypeface(mTypeface);
+            mWowPaint.setStyle(Paint.Style.FILL);
+            mWowPaint.setAntiAlias(true);
+            mWowPaint.setTextAlign(Paint.Align.CENTER);
 
             mTime = new Time();
         }
@@ -217,36 +263,64 @@ public class MyWatchFace extends CanvasWatchFaceService {
             float centerX = bounds.width() / 2f;
             float centerY = bounds.height() / 2f;
 
-            // Draw the background.
+            //draw digital watchface when ambient or analogue w/ face on active
             if (isInAmbientMode()) {
                 canvas.drawColor(Color.BLACK);
             } else {
                 canvas.drawBitmap(mScaledBackgroundBitmap, 0, 0, null);
                 drawWatchTicks(centerX, centerY, canvas);
+
+                float secRot = mTime.second / 30f * (float) Math.PI;
+                int minutes = mTime.minute;
+                float minRot = minutes / 30f * (float) Math.PI;
+                float hrRot = ((mTime.hour + (minutes / 60f)) / 6f) * (float) Math.PI;
+
+                float secLength = centerX - 20;
+                float minLength = centerX - 40;
+                float hrLength = centerX - 80;
+
+                if (!mAmbient) {
+                    float secX = (float) Math.sin(secRot) * secLength;
+                    float secY = (float) -Math.cos(secRot) * secLength;
+                    canvas.drawLine(centerX, centerY, centerX + secX, centerY + secY, mHandPaint);
+                }
+
+                float minX = (float) Math.sin(minRot) * minLength;
+                float minY = (float) -Math.cos(minRot) * minLength;
+                canvas.drawLine(centerX, centerY, centerX + minX, centerY + minY, mHandPaint);
+
+                float hrX = (float) Math.sin(hrRot) * hrLength;
+                float hrY = (float) -Math.cos(hrRot) * hrLength;
+                canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHandPaint);
             }
 
-            float secRot = mTime.second / 30f * (float) Math.PI;
-            int minutes = mTime.minute;
-            float minRot = minutes / 30f * (float) Math.PI;
-            float hrRot = ((mTime.hour + (minutes / 60f)) / 6f) * (float) Math.PI;
+            //fuzzy time
+            String fuzzyTime = watchUtils.getFuzzTimeString(getBaseContext(), mTime);
+            float ftWidth = mDigitalTimePaint.measureText(fuzzyTime);
+            float ftx = (bounds.width() - ftWidth) / 2 - 50;
+            float fty = bounds.height() / 2 - 80;
+            canvas.drawText(fuzzyTime, ftx, fty, mFuzzyTimePaint);
 
-            float secLength = centerX - 20;
-            float minLength = centerX - 40;
-            float hrLength = centerX - 80;
+            // digital time
+            String digitalTime = "So " + watchUtils.getFormattedDigitalTime(mTime);
+            float dtWidth = mDigitalTimePaint.measureText(digitalTime);
+            float dtx = (bounds.width() - dtWidth) / 2 + 80;
+            float dty = bounds.height() / 2 - 30;
+            canvas.drawText(digitalTime, dtx, dty, mDigitalTimePaint);
 
-            if (!mAmbient) {
-                float secX = (float) Math.sin(secRot) * secLength;
-                float secY = (float) -Math.cos(secRot) * secLength;
-                canvas.drawLine(centerX, centerY, centerX + secX, centerY + secY, mHandPaint);
-            }
+            // date
+            String dateString = "much " + watchUtils.getFormattedDate(mTime);
+            float dsWidth = mDigitalTimePaint.measureText(digitalTime);
+            float dsx = (bounds.width() - dsWidth) / 2 - 50;
+            float dsy = bounds.height() / 2 + 65;
+            canvas.drawText(dateString, dsx, dsy, mDatePaint);
 
-            float minX = (float) Math.sin(minRot) * minLength;
-            float minY = (float) -Math.cos(minRot) * minLength;
-            canvas.drawLine(centerX, centerY, centerX + minX, centerY + minY, mHandPaint);
-
-            float hrX = (float) Math.sin(hrRot) * hrLength;
-            float hrY = (float) -Math.cos(hrRot) * hrLength;
-            canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHandPaint);
+            // wow
+            String wowString = getString(R.string.wow_string);
+            float wowWidth = mDigitalTimePaint.measureText(digitalTime);
+            float wowx = bounds.width() / 2;
+            float wowy = bounds.height() / 2 + 120;
+            canvas.drawText(wowString, wowx, wowy, mWowPaint);
         }
 
         @Override
@@ -355,5 +429,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 }
             }
         }
+
+
     }
 }
